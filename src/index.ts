@@ -6,7 +6,7 @@ import { IncomingHttpHeaders } from 'http';
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { Kind, TObject, TSchema, Type } from '@sinclair/typebox';
 
-const Log = Logger.debugger('@novice1/validator-typebox'); 
+const Log = Logger.debugger('@novice1/validator-typebox');
 const PARAMETERS_PROPS = ['params', 'body', 'query', 'headers', 'cookies', 'files'];
 
 interface ValidationObject {
@@ -19,12 +19,12 @@ interface ValidationObject {
 }
 
 function retrieveParametersValue(parameters?: Record<string, unknown>, property?: string): TObject | Record<string, unknown> | null {
-    let schemaFromParameters: Record<string, unknown> | null = null; 
+    let schemaFromParameters: Record<string, unknown> | null = null;
     if (
         parameters &&
         typeof parameters === 'object'
     ) {
-        schemaFromParameters = parameters; 
+        schemaFromParameters = parameters;
         if (property && typeof property === 'string') {
             const subParameters = schemaFromParameters?.[property];
             if (
@@ -37,7 +37,7 @@ function retrieveParametersValue(parameters?: Record<string, unknown>, property?
                 schemaFromParameters = null;
             }
         }
-    } 
+    }
     return schemaFromParameters;
 }
 
@@ -45,7 +45,7 @@ function isSchema(x: unknown): x is TObject {
     return !!(x && typeof x === 'object' && Kind in x && x[Kind] === 'Object')
 }
 
-function retrieveSchema(parameters?: Record<string, unknown>, property?: string): TObject | null {    
+function retrieveSchema(parameters?: Record<string, unknown>, property?: string): TObject | null {
     const v = retrieveParametersValue(parameters, property);
     if (v) {
         let schema: TObject | null = null
@@ -81,7 +81,7 @@ function retrieveSchema(parameters?: Record<string, unknown>, property?: string)
         return schema
     }
     return v
-    
+
 }
 
 function buildValueToValidate(schema: object, req: Request): ValidationObject {
@@ -119,8 +119,12 @@ export type ValidatorTypeboxSchema = TObject | {
     files?: TSchema | { [x: string]: TSchema }
 }
 
+export type ValidatorTypeboxOptions = {
+    references?: TSchema[]
+}
+
 export function validatorTypebox(
-    options?: { references: TSchema[] },
+    options?: ValidatorTypeboxOptions,
     onerror?: ErrorRequestHandler,
     schemaProperty?: string
 ): RequestHandler {
@@ -131,8 +135,11 @@ export function validatorTypebox(
             return next();
         }
         const values = buildValueToValidate(schema, req);
-        Log.info('validating %O', values); 
-        const C = TypeCompiler.Compile(schema, options?.references)
+        Log.info('validating %O', values);
+        const C = TypeCompiler.Compile(schema, req.meta.parameters?.validatorTypeboxOptions?.references ?
+            req.meta.parameters?.validatorTypeboxOptions.references :
+            options?.references
+        )
         const errors = [...C.Errors(values)]
         if (errors.length) {
             Log.error('Invalid request for %s', req.originalUrl);
@@ -156,7 +163,7 @@ export function validatorTypebox(
                 }
             }
             return res.status(400).json(err);
-        } 
+        }
         Log.info('Valid request for %s', req.originalUrl);
         return next();
     }

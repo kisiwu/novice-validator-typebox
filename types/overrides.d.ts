@@ -5,7 +5,7 @@ declare global {
   namespace NoviceRouting {
     interface MetaParameters {
         onerror?: routing.ErrorRequestHandler,
-        validatorTypeboxOptions?: { references: TSchema[] }
+        validatorTypeboxOptions?: { references?: TSchema[] }
     }
   }
 }
