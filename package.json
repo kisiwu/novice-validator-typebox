@@ -1,0 +1,58 @@
+{
+  "name": "@novice1/validator-typebox",
+  "private": false,
+  "version": "0.1.0",
+  "description": "Typebox validator to use with @novice1/routing.",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "doc": "typedoc",
+    "build": "tsc && node ./scripts/buildDT.mjs",
+    "lint": "eslint .",
+    "test": "env TS_NODE_FILES=true kaukau --require ts-node/register --config kaukau-src.mjs",
+    "testlib": "kaukau --config kaukau-lib.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kisiwu/novice-validator-typebox.git"
+  },
+  "keywords": [
+    "express",
+    "middleware",
+    "typebox",
+    "validator"
+  ],
+  "author": "demingongo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kisiwu/novice-validator-typebox/issues"
+  },
+  "homepage": "https://github.com/kisiwu/novice-validator-typebox#readme",
+  "dependencies": {
+    "@novice1/logger": "^1.6.0",
+    "@sinclair/typebox": "^0.34.33",
+    "tslib": "^2.8.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.26.0",
+    "@novice1/routing": "^2.0.2",
+    "@stylistic/eslint-plugin-js": "^4.2.0",
+    "@types/chai": "^5.2.2",
+    "@types/express": "^5.0.1",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.15.12",
+    "@typescript-eslint/eslint-plugin": "^8.32.0",
+    "@typescript-eslint/parser": "^8.32.0",
+    "chai": "^4.5.0",
+    "eslint": "^9.26.0",
+    "eslint-plugin-mocha": "^11.0.0",
+    "express": "^5.1.0",
+    "kaukau": "^4.1.6",
+    "ts-node": "^10.9.2",
+    "typedoc": "^0.28.4",
+    "typescript": "^5.8.3"
+  }
+}

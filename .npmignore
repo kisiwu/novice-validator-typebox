@@ -1,8 +1,14 @@
-private
+.github
+src
 docs
-/index.js
-/index.d.ts
-/index.js.map
+/test
+/scripts
+/types/files.d.ts
+typedoc.json
+private
+kaukau-*.mjs
+tsconfig.json
+eslint.config.mjs
 
 # Logs
 logs
