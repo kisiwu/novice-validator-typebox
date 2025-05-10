@@ -26,7 +26,17 @@ function retrieveParametersValue(parameters?: Record<string, unknown>, property?
     ) {
         schemaFromParameters = parameters;
         if (property && typeof property === 'string') {
-            const subParameters = schemaFromParameters?.[property];
+            // retrieve nested object property
+            const subParameters = property.replace(/\[([^[\]]*)\]/g, '.$1.')
+                .split('.')
+                .filter((t) => t !== '')
+                .reduce((prev: unknown, curr) => {
+                    if (prev && typeof prev === 'object' && curr in prev) {
+                        const tmp: unknown = prev[curr as keyof typeof prev]
+                        return tmp
+                    }
+                    return
+                }, schemaFromParameters);
             if (
                 subParameters &&
                 typeof subParameters === 'object' &&
