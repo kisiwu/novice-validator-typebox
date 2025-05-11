@@ -138,7 +138,7 @@ export function validatorTypebox(
     onerror?: ErrorRequestHandler,
     schemaProperty?: string
 ): RequestHandler {
-    return function validatorJsonRequestHandler(req, res, next) {
+    return function validatorTypeboxRequestHandler(req, res, next) {
         const schema = retrieveSchema(req.meta?.parameters, schemaProperty);
         if (!schema) {
             Log.silly('no schema to validate');
