@@ -22,6 +22,6 @@ describe('Set validator', function() {
       .to.eql('validator');
 
     expect(router.stack[0].route.stack[1].name)
-      .to.eql('validatorJsonRequestHandler');
+      .to.eql('validatorTypeboxRequestHandler');
   });
 });
