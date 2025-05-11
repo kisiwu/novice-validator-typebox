@@ -23,7 +23,7 @@ import { validatorTypebox } from '@novice1/validator-typebox'
 export default const router = routing()
 
 router.setValidators(
-  validatorJson(
+  validatorTypebox(
     // compile options
     { references: [] },
     // middleware in case validation fails
@@ -43,7 +43,6 @@ router.setValidators(
 
 import { Type, Static } from '@sinclair/typebox'
 import { ValidatorTypeboxSchema } from '@novice1/validator-typebox'
-import routing from '@novice1/routing'
 import router from './router'
 
 // schema for "req.body"
