@@ -24,8 +24,6 @@ export default const router = routing()
 
 router.setValidators(
   validatorTypebox(
-    // compile options
-    { references: [] },
     // middleware in case validation fails
     function onerror(err, req, res, next) {
       res.status(400).json(err)
@@ -103,26 +101,22 @@ router.post(
 
 ### Overrides
 
-Override the validator's options and the error handler for a route.
+Override the validator's error handler for a route.
 
 ```ts
 import routing from '@novice1/routing'
-import { ValidatorTypeboxOptions } from '@novice1/validator-typebox'
 import router from './router'
 
 const onerror: routing.ErrorRequestHandler = (err, req, res) => {
   res.status(400).json(err)
 }
 
-const validatorTypeboxOptions: ValidatorTypeboxOptions = { }
-
 router.get(
   {
     path: '/override',
     parameters: {
       // overrides
-      onerror, 
-      validatorTypeboxOptions
+      onerror
 
     },
   },

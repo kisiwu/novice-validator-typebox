@@ -1,10 +1,10 @@
-import { ErrorRequestHandler, RequestHandler, Request } from '@novice1/routing';
 import Logger from '@novice1/logger';
-import { ParsedQs } from 'qs';
-import { ParamsDictionary } from 'express-serve-static-core';
-import { IncomingHttpHeaders } from 'http';
-import { TypeCompiler } from '@sinclair/typebox/compiler'
-import { Kind, TObject, TSchema, Type } from '@sinclair/typebox';
+import type { ErrorRequestHandler, RequestHandler, Request } from '@novice1/routing';
+import type { ParamsDictionary } from 'express-serve-static-core';
+import type { IncomingHttpHeaders } from 'node:http';
+import type { ParsedQs } from 'qs';
+import { type TObject, type TSchema, Type, IsObject, IsSchema } from 'typebox';
+import { Compile } from 'typebox/compile';
 
 const Log = Logger.debugger('@novice1/validator-typebox');
 const PARAMETERS_PROPS = ['params', 'body', 'query', 'headers', 'cookies', 'files'];
@@ -18,30 +18,27 @@ interface ValidationObject {
     files?: unknown;
 }
 
-function retrieveParametersValue(parameters?: Record<string, unknown>, property?: string): TObject | Record<string, unknown> | null {
+function retrieveParametersValue(
+    parameters?: Record<string, unknown>,
+    property?: string
+): TObject | Record<string, unknown> | null {
     let schemaFromParameters: Record<string, unknown> | null = null;
-    if (
-        parameters &&
-        typeof parameters === 'object'
-    ) {
+    if (parameters && typeof parameters === 'object') {
         schemaFromParameters = parameters;
         if (property && typeof property === 'string') {
             // retrieve nested object property
-            const subParameters = property.replace(/\[([^[\]]*)\]/g, '.$1.')
+            const subParameters = property
+                .replace(/\[([^[\]]*)\]/g, '.$1.')
                 .split('.')
                 .filter((t) => t !== '')
                 .reduce((prev: unknown, curr) => {
                     if (prev && typeof prev === 'object' && curr in prev) {
-                        const tmp: unknown = prev[curr as keyof typeof prev]
-                        return tmp
+                        const tmp: unknown = prev[curr as keyof typeof prev];
+                        return tmp;
                     }
-                    return
+                    return;
                 }, schemaFromParameters);
-            if (
-                subParameters &&
-                typeof subParameters === 'object' &&
-                !Array.isArray(subParameters)
-            ) {
+            if (subParameters && typeof subParameters === 'object' && !Array.isArray(subParameters)) {
                 schemaFromParameters = subParameters as Record<string, unknown>;
             } else {
                 schemaFromParameters = null;
@@ -51,27 +48,23 @@ function retrieveParametersValue(parameters?: Record<string, unknown>, property?
     return schemaFromParameters;
 }
 
-function isSchema(x: unknown): x is TObject {
-    return !!(x && typeof x === 'object' && Kind in x && x[Kind] === 'Object')
-}
-
 function retrieveSchema(parameters?: Record<string, unknown>, property?: string): TObject | null {
     const v = retrieveParametersValue(parameters, property);
     if (v) {
-        let schema: TObject | null = null
-        let tempValue = v
+        let schema: TObject | null = null;
+        let tempValue = v;
         // check if schema is a valid schema
         if (tempValue) {
             // if it is not a TSchema
-            if (!isSchema(tempValue)) {
+            if (!IsObject(tempValue)) {
                 const tmpSchema: Record<string, TSchema> = {};
-                const currentSchema: Record<string, TSchema> = tempValue as Record<string, TSchema>;
+                const currentSchema: Record<string, unknown> = tempValue;
                 PARAMETERS_PROPS.forEach((p) => {
-                    if (currentSchema[p] && typeof currentSchema[p] === 'object') {
-                        if (Kind in currentSchema[p] && typeof currentSchema[p][Kind] === 'string')
-                            tmpSchema[p] = currentSchema[p];
+                    const currentSchemaValue = currentSchema[p];
+                    if (currentSchemaValue && typeof currentSchemaValue === 'object') {
+                        if (IsSchema(currentSchemaValue)) tmpSchema[p] = currentSchemaValue;
                         else {
-                            tmpSchema[p] = Type.Object(currentSchema[p]);
+                            tmpSchema[p] = Type.Object(currentSchemaValue);
                         }
                     }
                 });
@@ -83,21 +76,19 @@ function retrieveSchema(parameters?: Record<string, unknown>, property?: string)
             }
 
             // if it is a Joi.ObjectSchema
-            if (tempValue?.type == 'object'
-                && isSchema(tempValue)) {
+            if (tempValue?.type == 'object' && IsObject(tempValue)) {
                 schema = tempValue;
             }
         }
-        return schema
+        return schema;
     }
-    return v
-
+    return v;
 }
 
 function buildValueToValidate(schema: object, req: Request): ValidationObject {
-    const r: ValidationObject = {};    //'params', 'body', 'query', 'headers', 'cookies', 'files'
+    const r: ValidationObject = {}; //'params', 'body', 'query', 'headers', 'cookies', 'files'
     if ('properties' in schema && schema.properties && typeof schema.properties === 'object') {
-        const properties = schema.properties
+        const properties = schema.properties;
         if ('params' in properties) {
             r.params = req.params;
         }
@@ -120,24 +111,18 @@ function buildValueToValidate(schema: object, req: Request): ValidationObject {
     return r;
 }
 
-export type ValidatorTypeboxSchema = TObject | {
-    body?: TSchema | { [x: string]: TSchema }
-    headers?: TSchema | { [x: string]: TSchema }
-    cookies?: TSchema | { [x: string]: TSchema }
-    params?: TSchema | { [x: string]: TSchema }
-    query?: TSchema | { [x: string]: TSchema }
-    files?: TSchema | { [x: string]: TSchema }
-}
+export type ValidatorTypeboxSchema =
+    | TObject
+    | {
+          body?: TSchema | { [x: string]: TSchema };
+          headers?: TSchema | { [x: string]: TSchema };
+          cookies?: TSchema | { [x: string]: TSchema };
+          params?: TSchema | { [x: string]: TSchema };
+          query?: TSchema | { [x: string]: TSchema };
+          files?: TSchema | { [x: string]: TSchema };
+      };
 
-export type ValidatorTypeboxOptions = {
-    references?: TSchema[]
-}
-
-export function validatorTypebox(
-    options?: ValidatorTypeboxOptions,
-    onerror?: ErrorRequestHandler,
-    schemaProperty?: string
-): RequestHandler {
+export function validatorTypebox(onerror?: ErrorRequestHandler, schemaProperty?: string): RequestHandler {
     return function validatorTypeboxRequestHandler(req, res, next) {
         const schema = retrieveSchema(req.meta?.parameters, schemaProperty);
         if (!schema) {
@@ -146,19 +131,13 @@ export function validatorTypebox(
         }
         const values = buildValueToValidate(schema, req);
         Log.info('validating %O', values);
-        const C = TypeCompiler.Compile(schema, req.meta.parameters?.validatorTypeboxOptions?.references ?
-            req.meta.parameters?.validatorTypeboxOptions.references :
-            options?.references
-        )
-        const errors = [...C.Errors(values)]
+        const C = Compile(schema);
+        const errors = [...C.Errors(values)];
         if (errors.length) {
             Log.error('Invalid request for %s', req.originalUrl);
-            const err = { errors }
+            const err = { errors };
             if (typeof req.meta.parameters?.onerror === 'function') {
-                Log.error(
-                    'Custom function onerror => %s',
-                    req.meta.parameters.onerror.name
-                );
+                Log.error('Custom function onerror => %s', req.meta.parameters.onerror.name);
                 return req.meta.parameters.onerror(err, req, res, next);
             }
             if (onerror) {
@@ -176,5 +155,5 @@ export function validatorTypebox(
         }
         Log.info('Valid request for %s', req.originalUrl);
         return next();
-    }
+    };
 }

@@ -1,14 +1,18 @@
 .github
+.vscode
 src
 docs
+private
 /test
 /scripts
 /types/files.d.ts
-typedoc.json
-private
-kaukau-*.mjs
-tsconfig.json
+.prettierignore
 eslint.config.mjs
+kaukau-*.mjs
+lint-staged.config.mts
+prettier.config.mts
+tsconfig.json
+typedoc.json
 
 # Logs
 logs
