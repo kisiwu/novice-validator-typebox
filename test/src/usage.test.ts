@@ -4,7 +4,7 @@ import Logger from '@novice1/logger';
 import { expect } from 'chai';
 
 const onerror: routing.ErrorRequestHandler<unknown, { error: unknown }> = (err, _req, res) => {
-  res.status(400).json({error: err})
+  res.status(400).json({ error: err })
 }
 
 describe('Set validator', () => {
@@ -24,7 +24,7 @@ describe('Set validator', () => {
       res.json(req.meta)
     });
 
-  it('should have registered \'post\' route with the validator middleware', function() {
+  it('should have registered \'post\' route with the validator middleware', function () {
     expect(router.stack[0].route?.path).to.equal('/post');
 
     let type: string = ''

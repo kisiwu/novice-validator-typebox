@@ -5,6 +5,7 @@ import type { IncomingHttpHeaders } from 'node:http';
 import type { ParsedQs } from 'qs';
 import { type TObject, type TSchema, Type, IsObject, IsSchema } from 'typebox';
 import { Compile } from 'typebox/compile';
+import { TLocalizedValidationError } from 'typebox/error';
 
 const Log = Logger.debugger('@novice1/validator-typebox');
 const PARAMETERS_PROPS = ['params', 'body', 'query', 'headers', 'cookies', 'files'];
@@ -135,7 +136,7 @@ export function validatorTypebox(onerror?: ErrorRequestHandler, schemaProperty?:
         const errors = [...C.Errors(values)];
         if (errors.length) {
             Log.error('Invalid request for %s', req.originalUrl);
-            const err = { errors };
+            const err: { errors: TLocalizedValidationError[] } = { errors };
             if (typeof req.meta.parameters?.onerror === 'function') {
                 Log.error('Custom function onerror => %s', req.meta.parameters.onerror.name);
                 return req.meta.parameters.onerror(err, req, res, next);

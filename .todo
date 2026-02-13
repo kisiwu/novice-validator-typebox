@@ -1,0 +1,2 @@
+- v1.0.0
+    - if valid request data, parse values into the request
