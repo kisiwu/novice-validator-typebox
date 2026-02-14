@@ -32,7 +32,7 @@
   "bugs": {
     "url": "https://github.com/kisiwu/novice-validator-typebox/issues"
   },
-  "homepage": "https://github.com/kisiwu/novice-validator-typebox#readme",
+  "homepage": "https://kisiwu.github.io/novice-validator-typebox/latest/",
   "dependencies": {
     "@novice1/logger": "^1.6.1",
     "extend": "^3.0.2",
