@@ -1,6 +1,7 @@
 import Logger from '@novice1/logger';
 import type { ErrorRequestHandler, RequestHandler, Request } from '@novice1/routing';
 import type { ParamsDictionary } from 'express-serve-static-core';
+import Extend from 'extend';
 import type { IncomingHttpHeaders } from 'node:http';
 import type { ParsedQs } from 'qs';
 import { type TObject, type TSchema, Type, IsObject, IsSchema } from 'typebox';
@@ -112,6 +113,10 @@ function buildValueToValidate(schema: object, req: Request): ValidationObject {
     return r;
 }
 
+export interface ValidatorTypeboxOptions {
+    parse?: boolean;
+}
+
 export type ValidatorTypeboxSchema =
     | TObject
     | {
@@ -123,7 +128,11 @@ export type ValidatorTypeboxSchema =
           files?: TSchema | { [x: string]: TSchema };
       };
 
-export function validatorTypebox(onerror?: ErrorRequestHandler, schemaProperty?: string): RequestHandler {
+export function validatorTypebox(
+    options?: ValidatorTypeboxOptions,
+    onerror?: ErrorRequestHandler,
+    schemaProperty?: string
+): RequestHandler {
     return function validatorTypeboxRequestHandler(req, res, next) {
         const schema = retrieveSchema(req.meta?.parameters, schemaProperty);
         if (!schema) {
@@ -131,19 +140,38 @@ export function validatorTypebox(onerror?: ErrorRequestHandler, schemaProperty?:
             return next();
         }
         const values = buildValueToValidate(schema, req);
-        Log.info('validating %O', values);
+        Log.debug('validating %O', values);
         const C = Compile(schema);
-        const errors = [...C.Errors(values)];
+        let parsedValues = values;
+        const parseEnabled =
+            (typeof req.meta.parameters?.validatorTypeboxOptions === 'boolean' &&
+                req.meta.parameters?.validatorTypeboxOptions) ||
+            (typeof req.meta.parameters?.validatorTypeboxOptions === 'undefined' && options?.parse) ||
+            false;
+        if (parseEnabled) {
+            try {
+                parsedValues = C.Parse(parsedValues);
+                Log.debug('Parsed and validated %O', parsedValues);
+
+                // because 'query' is readonly since Express v5
+                const { query, ...validatedProps } = parsedValues;
+                Log.debug('Validated query %o', query);
+                Extend(req, validatedProps);
+            } catch (err) {
+                Log.error(err);
+            }
+        }
+        const errors: TLocalizedValidationError[] = [...C.Errors(parsedValues)];
         if (errors.length) {
             Log.error('Invalid request for %s', req.originalUrl);
             const err: { errors: TLocalizedValidationError[] } = { errors };
             if (typeof req.meta.parameters?.onerror === 'function') {
-                Log.error('Custom function onerror => %s', req.meta.parameters.onerror.name);
+                Log.debug('Custom function onerror => %s', req.meta.parameters.onerror.name);
                 return req.meta.parameters.onerror(err, req, res, next);
             }
             if (onerror) {
                 if (typeof onerror === 'function') {
-                    Log.error('Custom function onerror => %s', onerror.name);
+                    Log.debug('Custom function onerror => %s', onerror.name);
                     return onerror(err, req, res, next);
                 } else {
                     Log.warn(
@@ -154,6 +182,8 @@ export function validatorTypebox(onerror?: ErrorRequestHandler, schemaProperty?:
             }
             return res.status(400).json(err);
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        req.validated = () => parsedValues as any;
         Log.info('Valid request for %s', req.originalUrl);
         return next();
     };
