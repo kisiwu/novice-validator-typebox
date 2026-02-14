@@ -13,17 +13,10 @@ Provides automatic request validation for routes using [TypeBox](https://github.
 - [Features](#features)
 - [Quick Start](#quick-start)
 - [Usage](#usage)
-  - [Setting Up the Validator](#setting-up-the-validator)
-  - [Defining Schemas](#defining-schemas)
-  - [Creating Validated Routes](#creating-validated-routes)
-  - [Error Handling Overrides](#error-handling-overrides)
-  - [Overriding Validator Options Per Route](#overriding-validator-options-per-route)
+  - [Schema Definition](#schema-definition)
+  - [Per-Route Overrides](#per-route-overrides)
   - [Accessing Validated Data](#accessing-validated-data)
 - [API Reference](#api-reference)
-  - [ValidatorTypeboxOptions](#validatortypeboxoptions)
-  - [validatorTypebox()](#validatortypeboxoptions-onerror-schemaproperty)
-  - [ValidatorTypeboxSchema](#validatortypeboxschema-1)
-  - [req.validated()](#reqvalidatedq-p-b-h-c-f)
 - [Examples](#examples)
 - [License](#license)
 - [References](#references)
@@ -53,18 +46,16 @@ import { Type } from 'typebox';
 
 const router = routing();
 
-// Set up the validator
+// Set up validator
 router.setValidators(
   validatorTypebox(
-    { parse: false },
-    (err, req, res, next) => {
-      res.status(400).json({ error: 'Validation failed', details: err });
-    },
-    'schema'
+    { parse: false }, // options
+    (err, req, res, next) => res.status(400).json(err), // error handler
+    'schema' // schema property name
   )
 );
 
-// Create a validated route
+// Create validated route
 router.post(
   {
     path: '/users',
@@ -77,333 +68,84 @@ router.post(
       }
     }
   },
-  (req, res) => {
-    res.json({ success: true, data: req.body });
-  }
+  (req, res) => res.json({ success: true, data: req.body })
 );
 ```
 
 ## Usage
 
-### Setting Up the Validator
+### Schema Definition
 
-Create a router instance and configure the TypeBox validator:
-
-```typescript
-// router.ts
-import routing from '@novice1/routing';
-import { validatorTypebox } from '@novice1/validator-typebox';
-
-const router = routing();
-
-router.setValidators(
-  validatorTypebox(
-    // Configuration options
-    { parse: false },
-    // Error handler middleware (called when validation fails)
-    function onError(err, req, res, next) {
-      res.status(400).json({
-        error: 'Validation failed',
-        details: err
-      });
-    },
-    // Property name containing the schema
-    'schema'
-  )
-);
-
-export default router;
-```
-
-### Defining Schemas
-
-Define TypeBox schemas for your route parameters:
+Schemas can be defined in three ways:
 
 ```typescript
-// schema.ts
 import { Type, Static } from 'typebox';
 import { ValidatorTypeboxSchema } from '@novice1/validator-typebox';
 
-// Define schema for request body
 const bodySchema = Type.Object({
   name: Type.String({ minLength: 1 }),
-  email: Type.String({ format: 'email' }),
-  age: Type.Optional(Type.Number({ minimum: 0 }))
+  email: Type.String({ format: 'email' })
 });
 
-// Extract TypeScript type from schema
-export type BodyItem = Static<typeof bodySchema>;
+// Method 1: Type.Object wrapper
+const schema1: ValidatorTypeboxSchema = Type.Object({ body: bodySchema });
 
-// Method 1: Using Type.Object wrapper
-export const routeSchema: ValidatorTypeboxSchema = Type.Object({
-  body: bodySchema
-});
+// Method 2: Plain object with TSchema
+const schema2: ValidatorTypeboxSchema = { body: bodySchema };
 
-// Method 2: Using plain object
-// export const routeSchema: ValidatorTypeboxSchema = {
-//   body: bodySchema
-// };
-
-// Method 3: Plain object with TypeBox schema values (no Type.Object wrapper)
-// export const routeSchema: ValidatorTypeboxSchema = {
-//   body: {
-//     name: Type.String(),
-//     email: Type.String({ format: 'email' }),
-//     age: Type.Optional(Type.Number({ minimum: 0 }))
-//   }
-// };
-```
-
-### Creating Validated Routes
-
-Create routes with automatic validation:
-
-```typescript
-// routes.ts
-import routing from '@novice1/routing';
-import express from 'express';
-import router from './router';
-import { BodyItem, routeSchema } from './schema';
-
-router.post(
-  {
-    name: 'Create Item',
-    path: '/items',
-    parameters: {
-      // Attach the validation schema
-      schema: routeSchema
-    },
-    // Body parser middleware (runs before validation)
-    preValidators: express.json()
-  },
-  function (req: routing.Request<unknown, unknown, BodyItem>, res) {
-    // req.body is now validated and typed
-    res.status(201).json({
-      success: true,
-      item: {
-        name: req.body.name,
-        email: req.body.email
-      }
-    });
+// Method 3: Plain object with schema values
+const schema3: ValidatorTypeboxSchema = {
+  body: {
+    name: Type.String(),
+    email: Type.String({ format: 'email' })
   }
-);
-```
-
-### Error Handling Overrides
-
-Override the global error handler for specific routes:
-
-```typescript
-import routing from '@novice1/routing';
-import router from './router';
-
-// Custom error handler for this route
-const customErrorHandler: routing.ErrorRequestHandler = (err, req, res, next) => {
-  console.error('Validation error:', err);
-  res.status(422).json({
-    error: 'Invalid input',
-    message: 'Please check your request data',
-    details: err
-  });
 };
-
-router.get(
-  {
-    path: '/special-route',
-    parameters: {
-      schema: {
-        query: Type.Object({
-          search: Type.String()
-        })
-      },
-      // Override error handler for this route only
-      onerror: customErrorHandler
-    }
-  },
-  function (req, res) {
-    res.json({ results: [] });
-  }
-);
 ```
 
-### Overriding Validator Options Per Route
+### Per-Route Overrides
 
-You can override the global validator options for specific routes using `validatorTypeboxOptions`:
+Override validator options or error handler for specific routes:
 
 ```typescript
-import routing from '@novice1/routing';
-import { Type } from 'typebox';
-import router from './router';
-
-// Global validator has parse disabled
-router.setValidators(
-  validatorTypebox(
-    { parse: false },
-    (err, req, res, next) => res.status(400).json(err),
-    'schema'
-  )
-);
-
-// Enable parse for this specific route only
 router.post(
   {
     path: '/data',
     parameters: {
-      schema: {
-        body: Type.Object({
-          count: Type.Number(),
-          enabled: Type.Boolean()
-        })
-      },
-      // Override: enable parse for this route
-      validatorTypeboxOptions: {
-        parse: true
-      }
+      schema: { body: Type.Object({ count: Type.Number() }) },
+      // Override options
+      validatorTypeboxOptions: { parse: true },
+      // Override error handler
+      onerror: (err, req, res, next) => res.status(422).json(err)
     }
   },
-  (req, res) => {
-    // req.body.count is now a number (parsed from string)
-    // req.body.enabled is now a boolean (parsed from string)
-    res.json({ received: req.body });
-  }
+  handler
 );
 ```
 
 ### Accessing Validated Data
 
-After successful validation, you can access validated (and potentially parsed) data using the `req.validated()` function. This is particularly useful for accessing parsed query parameters, since `req.query` is readonly and cannot be modified:
+Use `req.validated()` to access parsed values (especially useful for `query` which is readonly):
 
 ```typescript
-import routing from '@novice1/routing';
-import { Type, Static } from 'typebox';
-import router from './router';
-
-// Set up validator with parse enabled
-router.setValidators(
-  validatorTypebox(
-    { parse: true },
-    (err, req, res, next) => res.status(400).json(err),
-    'schema'
-  )
-);
-
-// Define a query schema with numeric values
-const searchSchema = Type.Object({
-  q: Type.String(),
-  page: Type.Optional(Type.Number({ minimum: 1 })),
-  limit: Type.Optional(Type.Number({ minimum: 1, maximum: 100 }))
-});
-
-type SearchQuery = Static<typeof searchSchema>;
-
-router.get(
-  {
-    path: '/search',
-    parameters: {
-      schema: {
-        query: searchSchema
-      }
-    }
-  },
-  (req: routing.Request<unknown, unknown, unknown, SearchQuery>, res) => {
-    // Method 1: Access parsed data via req.validated()
-    const validated = req.validated?.<SearchQuery>();
-    const page = validated?.query?.page ?? 1; // page is number
-    const limit = validated?.query?.limit ?? 10; // limit is number
-    
-    // Method 2: req.query still works but values remain as strings
-    // const page = parseInt(req.query.page ?? '1', 10);
-    
-    res.json({
-      query: req.query.q,
-      page, // Already a number
-      limit // Already a number
-    });
-  }
-);
+const validated = req.validated?.<{ page?: number }>();
+const page = validated?.query?.page; // number | undefined
 ```
-
-**TypeScript Signature:**
-
-```typescript
-req.validated?.<Q, P, B, H, C, F>(): {
-  query?: Q
-  params?: P
-  body?: B
-  headers?: H
-  cookies?: C
-  files?: F
-}
-```
-
-Where:
-- `Q` = Query type
-- `P` = Params type
-- `B` = Body type
-- `H` = Headers type
-- `C` = Cookies type
-- `F` = Files type
 
 ## API Reference
 
-### `ValidatorTypeboxOptions`
-
-Configuration options interface for the TypeBox validator.
-
-**Properties:**
-
-- `parse?: boolean` - When `true`, enables parsing and transformation of validated values according to the schema. Parsed values are assigned back to the request object (except `query` which is readonly). Can be overridden per-route by setting `validatorTypeboxOptions` in route parameters. Default: `false`
-
-**Per-Route Override:**
-
-You can override these options for specific routes by setting `validatorTypeboxOptions` in the route's `parameters`:
-
-```typescript
-router.post({
-  path: '/data',
-  parameters: {
-    schema: { /* ... */ },
-    validatorTypeboxOptions: {
-      parse: true // Override global settings
-    }
-  }
-}, handler);
-```
-
 ### `validatorTypebox(options?, onError?, schemaProperty?)`
-
-Creates a TypeBox validator middleware for use with @novice1/routing.
 
 **Parameters:**
 
-- `options` (optional): Configuration options for the validator
-  - Type: `ValidatorTypeboxOptions`
-  - Properties:
-    - `parse?: boolean` - When `true`, enables parsing and transformation of validated values. Parsed values will be assigned back to the request object (except query which is readonly). Can be overridden per-route using `validatorTypeboxOptions` in route parameters.
-  - Default: `undefined`
-- `onError` (optional): Error handler middleware function called when validation fails
-  - Type: `(err: any, req: Request, res: Response, next: NextFunction) => void`
-  - Default: Returns HTTP 400 status with validation errors as JSON: `res.status(400).json({ errors: [...] })`
-  - Can be overridden per-route using `onerror` in route parameters
-- `schemaProperty` (optional): Name of the route parameter property containing the schema
-  - Type: `string`
-  - Default: `undefined` (uses `req.meta.parameters` directly as the schema instead of a nested property like `req.meta.parameters.schema`)
+- `options?: { parse?: boolean }` - Enable parsing/transformation of validated values. Parsed values assigned back to the request object (except readonly `query`)
+- `onError?: ErrorRequestHandler` - Custom error handler. Default: `res.status(400).json({ errors: [...] })`  
+- `schemaProperty?: string` - Property name for schema in `req.meta.parameters`. Default: `undefined` (uses `req.meta.parameters` directly)
 
-**Returns:** Validator middleware function
-
-**Per-Route Overrides:**
-
-Both `options` and `onError` can be overridden for specific routes via route parameters:
-- Override options: `parameters.validatorTypeboxOptions`
-- Override error handler: `parameters.onerror`
+**Per-Route Overrides:** Use `parameters.validatorTypeboxOptions` and `parameters.onerror`
 
 ### `ValidatorTypeboxSchema`
 
-Type definition for validation schemas. Can validate multiple request properties:
-
 ```typescript
-import type { TObject, TSchema } from 'typebox';
-
 type ValidatorTypeboxSchema =
   | TObject
   | {
@@ -416,92 +158,26 @@ type ValidatorTypeboxSchema =
     };
 ```
 
-Each property can be either:
-- A TypeBox `TSchema` (like `Type.Object(...)`, `Type.String()`, etc.)
-- A plain object with TypeBox schemas as values (e.g., `{ name: Type.String() }`)
-
 ### `req.validated<Q, P, B, H, C, F>()`
 
-Function available on the request object after successful validation. Returns validated (and potentially parsed) data.
-
-**Type Parameters:**
-
-- `Q` - Query parameters type
-- `P` - Route parameters type
-- `B` - Body type
-- `H` - Headers type
-- `C` - Cookies type
-- `F` - Files type
-
-**Returns:**
+Returns validated and parsed data. Available only after successful validation.
 
 ```typescript
-{
-  query?: Q
-  params?: P
-  body?: B
-  headers?: H
-  cookies?: C
-  files?: F
-  [x: string]: unknown
+req.validated?.<Q, P, B, H, C, F>(): {
+  query?: Q, params?: P, body?: B, headers?: H, cookies?: C, files?: F
 }
 ```
 
-**Availability:** This function is only available after the request has been validated against a schema.
-
-**Use Case:** Primarily useful when `parse: true` is enabled to access parsed query parameters, since `req.query` is readonly and cannot be modified by TypeBox parsing.
-
-**Example:**
-
-```typescript
-const validated = req.validated?.<{ version?: number }>();
-const version = validated?.query?.version; // number | undefined (not string)
-```
+**Use case:** Access parsed `query` values (since `req.query` is readonly).
 
 ## Examples
 
-**Validating Query Parameters:**
+**Basic Validation:**
 
 ```typescript
 import { Type, Static } from 'typebox';
 import routing from '@novice1/routing';
-import router from './router';
 
-// Define the query schema
-const searchQuerySchema = Type.Object({
-  q: Type.String({ minLength: 1 }),
-  page: Type.Optional(Type.String({ pattern: '^[0-9]+$' })),
-  limit: Type.Optional(Type.String())
-});
-
-router.get(
-  {
-    path: '/search',
-    parameters: {
-      schema: {
-        query: searchQuerySchema
-      }
-    }
-  },
-  (req: routing.Request<unknown, unknown, unknown, Static<typeof searchQuerySchema>>, res) => {
-    const { q, page = '1', limit = '10' } = req.query;
-    res.json({ 
-      query: q, 
-      page: parseInt(page, 10),
-      limit: parseInt(limit, 10)
-    });
-  }
-);
-```
-
-**Validating Route Parameters:**
-
-```typescript
-import { Type, Static } from 'typebox';
-import routing from '@novice1/routing';
-import router from './router';
-
-// Define the params schema
 const userParamsSchema = Type.Object({
   id: Type.String({ pattern: '^[0-9]+$' })
 });
@@ -510,9 +186,7 @@ router.get(
   {
     path: '/users/:id',
     parameters: {
-      schema: {
-        params: userParamsSchema
-      }
+      schema: { params: userParamsSchema }
     }
   },
   (req: routing.Request<Static<typeof userParamsSchema>>, res) => {
@@ -521,89 +195,30 @@ router.get(
 );
 ```
 
-**Using Parse Option:**
+**With Parsing and Validated Data Access:**
 
 ```typescript
-import { Type, Static } from 'typebox';
-import routing from '@novice1/routing';
-import express from 'express';
-import router from './router';
-
-// Set up validator with parse enabled
-router.setValidators(
-  validatorTypebox(
-    { parse: true },
-    (err, req, res, next) => {
-      res.status(400).json({ error: err });
-    },
-    'schema'
-  )
-);
-
-// Define schema with transformations
-const createUserSchema = Type.Object({
-  name: Type.String(),
-  age: Type.Number(), // Will parse string to number if parse is enabled
-  active: Type.Boolean() // Will parse string to boolean if parse is enabled
-});
-
-router.post(
-  {
-    path: '/users',
-    parameters: {
-      schema: {
-        body: createUserSchema
-      }
-    },
-    preValidators: express.json()
-  },
-  (req: routing.Request<unknown, unknown, Static<typeof createUserSchema>>, res) => {
-    // req.body values are now parsed and transformed
-    res.json({ user: req.body });
-  }
-);
-```
-
-**Accessing Parsed Query Parameters:**
-
-```typescript
-import { Type, Static } from 'typebox';
-import routing from '@novice1/routing';
-import router from './router';
-
-// Define query schema with numeric and boolean types
 const apiQuerySchema = Type.Object({
   search: Type.String(),
   version: Type.Optional(Type.Number()),
   includeArchived: Type.Optional(Type.Boolean())
 });
 
-type ApiQuery = Static<typeof apiQuerySchema>;
-
 router.get(
   {
     path: '/api/items',
     parameters: {
-      schema: {
-        query: apiQuerySchema
-      },
-      // Enable parse for this route to transform query values
-      validatorTypeboxOptions: {
-        parse: true
-      }
+      schema: { query: apiQuerySchema },
+      validatorTypeboxOptions: { parse: true }
     }
   },
-  (req: routing.Request<unknown, unknown, unknown, ApiQuery>, res) => {
-    // Use req.validated() to access parsed query values
-    // This is necessary because req.query is readonly and not parsed
-    const validated = req.validated?.<ApiQuery>();
+  (req, res) => {
+    const validated = req.validated?.<Static<typeof apiQuerySchema>>();
     const version = validated?.query?.version; // number | undefined
-    const includeArchived = validated?.query?.includeArchived; // boolean | undefined
     
     res.json({ 
       search: req.query.search,
-      version, // Already a number, not a string
-      includeArchived // Already a boolean, not a string
+      version // Already a number, not a string
     });
   }
 );
