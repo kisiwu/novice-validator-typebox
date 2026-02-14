@@ -32,7 +32,7 @@ npm install @novice1/validator-typebox
 - 🎯 **Type-safe validation** using TypeBox schemas
 - 🔧 **Multiple validation targets**: params, body, query, headers, cookies, files
 - 🎨 **Flexible error handling** with custom error handlers
-- 🔒 **TypeScript support** with full type inference
+- 🔒 **TypeScript support** with type safety via `Static<typeof schema>`
 - ⚡ **Easy integration** with @novice1/routing
 - 🔄 **Optional parsing** to transform validated values according to schema types
 - 📦 **Access validated data** via `req.validated()` function for type-safe retrieval of parsed values
