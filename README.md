@@ -18,6 +18,9 @@ Provides automatic request validation for routes using [TypeBox](https://github.
   - [Creating Validated Routes](#creating-validated-routes)
   - [Error Handling Overrides](#error-handling-overrides)
 - [API Reference](#api-reference)
+  - [ValidatorTypeboxOptions](#validatortypeboxoptions)
+  - [validatorTypebox()](#validatortypeboxoptions-onerror-schemaproperty)
+  - [ValidatorTypeboxSchema](#validatortypeboxschema-1)
 - [Examples](#examples)
 - [License](#license)
 - [References](#references)
@@ -35,6 +38,7 @@ npm install @novice1/validator-typebox
 - 🎨 **Flexible error handling** with custom error handlers
 - 🔒 **TypeScript support** with full type inference
 - ⚡ **Easy integration** with @novice1/routing
+- 🔄 **Optional parsing** to transform validated values according to schema types
 
 ## Quick Start
 
@@ -48,6 +52,7 @@ const router = routing();
 // Set up the validator
 router.setValidators(
   validatorTypebox(
+    { parse: false },
     (err, req, res, next) => {
       res.status(400).json({ error: 'Validation failed', details: err });
     },
@@ -89,6 +94,8 @@ const router = routing();
 
 router.setValidators(
   validatorTypebox(
+    // Configuration options
+    { parse: false },
     // Error handler middleware (called when validation fails)
     function onError(err, req, res, next) {
       res.status(400).json({
@@ -217,12 +224,25 @@ router.get(
 
 ## API Reference
 
-### `validatorTypebox(onError?, schemaProperty?)`
+### `ValidatorTypeboxOptions`
+
+Configuration options interface for the TypeBox validator.
+
+**Properties:**
+
+- `parse?: boolean` - When `true`, enables parsing and transformation of validated values according to the schema. Parsed values are assigned back to the request object (except `query` which is readonly). Can be overridden per-route by setting `validatorTypeboxOptions` in route parameters. Default: `false`
+
+### `validatorTypebox(options?, onError?, schemaProperty?)`
 
 Creates a TypeBox validator middleware for use with @novice1/routing.
 
 **Parameters:**
 
+- `options` (optional): Configuration options for the validator
+  - Type: `ValidatorTypeboxOptions`
+  - Properties:
+    - `parse?: boolean` - When `true`, enables parsing and transformation of validated values. Parsed values will be assigned back to the request object (except query which is readonly). Can be overridden per-route using `validatorTypeboxOptions` in route parameters.
+  - Default: `undefined`
 - `onError` (optional): Error handler middleware function called when validation fails
   - Type: `(err: any, req: Request, res: Response, next: NextFunction) => void`
   - Default: Returns HTTP 400 status with validation errors as JSON: `res.status(400).json({ errors: [...] })`
@@ -314,6 +334,49 @@ router.get(
   },
   (req: routing.Request<Static<typeof userParamsSchema>>, res) => {
     res.json({ userId: req.params.id });
+  }
+);
+```
+
+**Using Parse Option:**
+
+```typescript
+import { Type, Static } from 'typebox';
+import routing from '@novice1/routing';
+import express from 'express';
+import router from './router';
+
+// Set up validator with parse enabled
+router.setValidators(
+  validatorTypebox(
+    { parse: true },
+    (err, req, res, next) => {
+      res.status(400).json({ error: err });
+    },
+    'schema'
+  )
+);
+
+// Define schema with transformations
+const createUserSchema = Type.Object({
+  name: Type.String(),
+  age: Type.Number(), // Will parse string to number if parse is enabled
+  active: Type.Boolean() // Will parse string to boolean if parse is enabled
+});
+
+router.post(
+  {
+    path: '/users',
+    parameters: {
+      schema: {
+        body: createUserSchema
+      }
+    },
+    preValidators: express.json()
+  },
+  (req: routing.Request<unknown, unknown, Static<typeof createUserSchema>>, res) => {
+    // req.body values are now parsed and transformed
+    res.json({ user: req.body });
   }
 );
 ```
