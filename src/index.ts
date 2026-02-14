@@ -162,13 +162,13 @@ export interface ValidatorTypeboxOptions {
 export type ValidatorTypeboxSchema =
     | TObject
     | {
-        body?: TSchema | { [x: string]: TSchema };
-        headers?: TSchema | { [x: string]: TSchema };
-        cookies?: TSchema | { [x: string]: TSchema };
-        params?: TSchema | { [x: string]: TSchema };
-        query?: TSchema | { [x: string]: TSchema };
-        files?: TSchema | { [x: string]: TSchema };
-    };
+          body?: TSchema | { [x: string]: TSchema };
+          headers?: TSchema | { [x: string]: TSchema };
+          cookies?: TSchema | { [x: string]: TSchema };
+          params?: TSchema | { [x: string]: TSchema };
+          query?: TSchema | { [x: string]: TSchema };
+          files?: TSchema | { [x: string]: TSchema };
+      };
 
 /**
  * Creates a TypeBox validator middleware for use with @novice1/routing.
