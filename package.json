@@ -17,7 +17,7 @@
   },
   "scripts": {
     "doc": "typedoc",
-    "build": "tsdown src/**/*.ts --format cjs,esm --out-dir lib --clean --dts --sourcemap --unbundle --no-fixed-extension",
+    "build": "tsdown src/**/*.ts --format cjs,esm --out-dir lib --clean --dts --sourcemap --unbundle --no-fixed-extension && node ./scripts/buildDT.mjs",
     "check": "tsc --noEmit",
     "test": "kaukau --import tsx --config kaukau-src.config.mjs",
     "test:lib": "kaukau --config kaukau-lib.config.mjs",

@@ -122,7 +122,7 @@ export interface ValidatorTypeboxOptions {
    * Can be overridden per-route using `validatorTypeboxOptions` in route parameters.
    * @default false
    */
-  parse?: boolean;
+  decode?: boolean;
 }
 
 /**
@@ -194,7 +194,7 @@ export type ValidatorTypeboxSchema =
  * // Set up validator with custom error handler
  * router.setValidators(
  *   validatorTypebox(
- *     { parse: true },
+ *     { decode: true },
  *     (err, req, res, next) => {
  *       res.status(400).json({ error: 'Validation failed', details: err });
  *     },
@@ -233,25 +233,25 @@ export function validatorTypebox(
     }
     const values = buildValueToValidate(schema, req);
     const C = Compile(schema);
-    let parsedValues = values;
-    const parseEnabled =
+    let decodedValues = values;
+    const decodeEnabled =
       (typeof req.meta.parameters?.validatorTypeboxOptions === 'boolean' &&
         req.meta.parameters?.validatorTypeboxOptions) ||
-      (typeof req.meta.parameters?.validatorTypeboxOptions === 'undefined' && options?.parse) ||
+      (typeof req.meta.parameters?.validatorTypeboxOptions === 'undefined' && options?.decode) ||
       false;
-    if (parseEnabled) {
-      parsedValues.query = { ...parsedValues.query };
+    if (decodeEnabled) {
+      decodedValues.query = { ...decodedValues.query };
 
       try {
-        parsedValues = Value.Decode(schema, parsedValues);
+        decodedValues = Value.Decode(schema, decodedValues);
         // because 'query' is readonly since Express v5
-        const { query: _, ...validatedProps } = parsedValues;
+        const { query: _, ...validatedProps } = decodedValues;
         Extend(req, validatedProps);
       } catch (_err) {
         //
       }
     }
-    const errors: TLocalizedValidationError[] = [...C.Errors(parsedValues)];
+    const errors: TLocalizedValidationError[] = [...C.Errors(decodedValues)];
     if (errors.length) {
       const err: { errors: TLocalizedValidationError[] } = { errors };
       if (typeof req.meta.parameters?.onerror === 'function') {
@@ -265,7 +265,7 @@ export function validatorTypebox(
       return res.status(400).json(err);
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    req.validated = () => parsedValues as any;
+    req.validated = () => decodedValues as any;
     return next();
   };
 }

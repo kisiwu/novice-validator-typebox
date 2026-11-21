@@ -152,8 +152,8 @@ describe('Set validator', () => {
     });
 
     const router = routing()
-      // options: parse = true to parse and validate the request automatically
-      .setValidators(validatorTypebox({ parse: true }, undefined, 'schema'))
+      // options: decode = true to decode and validate the request automatically
+      .setValidators(validatorTypebox({ decode: true }, undefined, 'schema'))
       .get(
         {
           path: '/get',
@@ -205,8 +205,8 @@ describe('Set validator', () => {
     });
 
     const router = routing()
-      // options: parse = false to not parse the validated values in the request
-      .setValidators(validatorTypebox({ parse: false }, undefined, 'schema'))
+      // options: decode = false to not decode the validated values in the request
+      .setValidators(validatorTypebox({ decode: false }, undefined, 'schema'))
       .get(
         {
           path: '/get',

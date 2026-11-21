@@ -1,4 +1,3 @@
-/*
 import { validatorTypebox } from '../../src/index.js';
 import routing from '@novice1/routing';
 import { expect } from 'chai';
@@ -39,4 +38,3 @@ describe('Set validator', () => {
     expect(router.stack[0].route?.stack[1].name).to.eql('validatorTypeboxRequestHandler');
   });
 });
-*/

@@ -35,7 +35,7 @@ npm install @novice1/validator-typebox
 - 🔒 **TypeScript support** with type safety via `Static<typeof schema>`
 - ⚡ **Easy integration** with @novice1/routing
 - 🔄 **Optional parsing** to transform validated values according to schema types
-- 📦 **Access validated data** via `req.validated()` function for type-safe retrieval of parsed values
+- 📦 **Access validated data** via `req.validated()` function for type-safe retrieval of decoded values
 
 ## Quick Start
 
@@ -49,7 +49,7 @@ const router = routing();
 // Set up validator
 router.setValidators(
   validatorTypebox(
-    { parse: false }, // options
+    { decode: false }, // options
     (err, req, res, next) => res.status(400).json(err), // error handler
     'schema' // schema property name
   )
@@ -113,7 +113,7 @@ router.post(
     parameters: {
       schema: { body: Type.Object({ count: Type.Number() }) },
       // Override options
-      validatorTypeboxOptions: { parse: true },
+      validatorTypeboxOptions: { decode: true },
       // Override error handler
       onerror: (err, req, res, next) => res.status(422).json(err)
     }
@@ -137,7 +137,7 @@ const page = validated?.query?.page; // number | undefined
 
 **Parameters:**
 
-- `options?: { parse?: boolean }` - Enable parsing/transformation of validated values. Parsed values assigned back to the request object (except readonly `query`)
+- `options?: { decode?: boolean }` - Enable decoding/transformation of validated values. Decoded values assigned back to the request object (except readonly `query`)
 - `onError?: ErrorRequestHandler` - Custom error handler. Default: `res.status(400).json({ errors: [...] })`  
 - `schemaProperty?: string` - Property name for schema in `req.meta.parameters`. Default: `undefined` (uses `req.meta.parameters` directly)
 
@@ -209,7 +209,7 @@ router.get(
     path: '/api/items',
     parameters: {
       schema: { query: apiQuerySchema },
-      validatorTypeboxOptions: { parse: true }
+      validatorTypeboxOptions: { decode: true }
     }
   },
   (req, res) => {
