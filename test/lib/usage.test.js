@@ -1,6 +1,6 @@
-const { validatorTypebox } = require('../../index');
-const routing = require('@novice1/routing');
-const { expect } = require('chai');
+import { validatorTypebox } from '../../lib/index.js';
+import routing from '@novice1/routing';
+import { expect } from 'chai';
 
 describe('Set validator', function () {
 

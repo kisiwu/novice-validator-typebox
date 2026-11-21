@@ -1,4 +1,4 @@
-import { defineConfig } from 'kaukau/config'
+import { defineConfig } from 'kaukau/config';
 
 export default defineConfig({
   enableLogs: true,
@@ -16,5 +16,5 @@ export default defineConfig({
     timeout: 3000,
     ui: 'bdd',
     color: true,
-  }
+  },
 });

@@ -1,6 +1,11 @@
 build
 lib
 dist
+dist-prod
+public
+view
+
+.vscode
 .husky
 coverage
 
@@ -8,3 +13,6 @@ coverage
 /*.json
 /*.yaml
 /*.yml
+
+*.md
+tsconfig.json

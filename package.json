@@ -1,20 +1,28 @@
 {
   "name": "@novice1/validator-typebox",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Typebox validator to use with @novice1/routing.",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
+  "type": "module",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs",
+      "default": "./lib/index.js"
+    }
   },
   "scripts": {
     "doc": "typedoc",
-    "build": "tsc && node ./scripts/buildDT.mjs",
-    "lint": "eslint .",
-    "test": "cross-env TS_NODE_FILES=true kaukau --require ts-node/register --config kaukau-src.config.mjs",
+    "build": "tsdown src/**/*.ts --format cjs,esm --out-dir lib --clean --dts --sourcemap --unbundle --no-fixed-extension",
+    "check": "tsc --noEmit",
+    "test": "kaukau --import tsx --config kaukau-src.config.mjs",
     "test:lib": "kaukau --config kaukau-lib.config.mjs",
-    "format": "cross-env NODE_OPTIONS=--experimental-strip-types prettier --write ./src",
-    "format:check": "cross-env NODE_OPTIONS=--experimental-strip-types prettier --check ./src",
+    "format": "cross-env NODE_OPTIONS=--experimental-strip-types prettier --write ./",
+    "format:check": "cross-env NODE_OPTIONS=--experimental-strip-types prettier --check ./",
     "format:staged": "cross-env NODE_OPTIONS=--experimental-strip-types lint-staged"
   },
   "repository": {
@@ -34,39 +42,36 @@
   },
   "homepage": "https://kisiwu.github.io/novice-validator-typebox/latest/",
   "dependencies": {
-    "@novice1/logger": "^1.6.1",
     "extend": "^3.0.2",
-    "tslib": "^2.8.1",
-    "typebox": "^1.0.81"
+    "tslib": "^2.9.1"
+  },
+  "peerDependencies": {
+    "@novice1/routing": "^2.2.0",
+    "typebox": "^1.4.7"
+  },
+  "peerDependenciesMeta": {
+    "@novice1/routing": {
+      "optional": true
+    }
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.3",
-    "@eslint/js": "^9.39.2",
-    "@novice1/routing": "^2.1.0",
-    "@stylistic/eslint-plugin": "^5.8.0",
+    "@novice1/routing": "^2.2.2",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@types/chai": "^5.2.3",
     "@types/express": "^5.0.6",
     "@types/extend": "^3.0.4",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^25.2.3",
-    "@typescript-eslint/eslint-plugin": "^8.55.0",
-    "@typescript-eslint/parser": "^8.55.0",
-    "chai": "^4.5.0",
+    "@types/node": "^26.6.6",
+    "@types/supertest": "^7.2.1",
+    "chai": "^6.3.0",
     "cross-env": "^10.1.0",
-    "eslint": "^9.39.2",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-import-resolver-typescript": "^4.4.4",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-mocha": "^11.2.0",
-    "express": "^5.2.1",
-    "globals": "^17.3.0",
-    "kaukau": "^4.2.1",
-    "lint-staged": "^16.2.7",
-    "prettier": "^3.8.1",
-    "ts-node": "^10.9.2",
+    "express": "^5.3.0",
+    "kaukau": "^6.0.2",
+    "prettier": "^3.10.1",
+    "supertest": "^7.3.2",
+    "tsdown": "^0.23.7",
+    "tsx": "^4.23.15",
     "typedoc": "^0.28.16",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.55.0"
+    "typescript": "^5.9.3"
   }
 }

@@ -1,8 +1,6 @@
 private
 docs
-/index.js
-/index.d.ts
-/index.js.map
+/lib
 
 # Logs
 logs

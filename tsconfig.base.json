@@ -1,0 +1,29 @@
+{
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    /* Target & Environment */
+    "target": "ES2022",
+    "lib": ["ES2022"], 
+
+    "typeRoots": ["types", "node_modules/@types", "node_modules"],
+    "types": ["node", "kaukau"],
+    
+    /* Module Resolution */
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "verbatimModuleSyntax": true,
+    
+    /* Output & Declarations */
+    "declaration": true,
+    "sourceMap": true,
+    
+    /* Strictness & Safety */
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
