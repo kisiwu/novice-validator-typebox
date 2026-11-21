@@ -22,7 +22,7 @@ describe('Routing with decode', () => {
   it('should not have decoded query parameters', async () => {
     const apiQuerySchema = Type.Object({
       search: Type.String(),
-      year: Type.Optional(Type.Number()),
+      year: Type.Optional(Type.Integer()),
       includeArchived: Type.Optional(Type.Boolean()),
     });
 
@@ -38,9 +38,9 @@ describe('Routing with decode', () => {
         },
         (req, res) => {
           const validated = req.validated?.<Static<typeof apiQuerySchema>>();
-          const search = validated?.query?.search; // string | undefined
-          const year = validated?.query?.year; // number | undefined
-          const includeArchived = validated?.query?.includeArchived; // boolean | undefined
+          const search = validated?.query?.search;
+          const year = validated?.query?.year;
+          const includeArchived = validated?.query?.includeArchived;
 
           res.json({
             original: req.query,
@@ -57,7 +57,7 @@ describe('Routing with decode', () => {
 
     const response = await supertest(app)
       .get('/api/items')
-      .query({ search: 'Get It How You Live', year: 2025, includeArchived: true })
+      .query({ search: 'Get It How You Live', year: 2005, includeArchived: true })
       .set('Accept', 'application/json')
       .expect(400);
     expect(response.body).to.have.property('errors');
@@ -67,8 +67,8 @@ describe('Routing with decode', () => {
         keyword: 'type',
         schemaPath: '#/properties/query/properties/year',
         instancePath: '/query/year',
-        params: { type: 'number' },
-        message: 'must be number',
+        params: { type: 'integer' },
+        message: 'must be integer',
       },
       {
         keyword: 'type',
@@ -86,7 +86,7 @@ describe('Routing with decode', () => {
   it('should have decoded query parameters when decode is true', async () => {
     const apiQuerySchema = Type.Object({
       search: Type.String(),
-      year: Type.Optional(Type.Number()),
+      year: Type.Optional(Type.Integer()),
       includeArchived: Type.Optional(Type.Boolean()),
     });
 
@@ -101,7 +101,6 @@ describe('Routing with decode', () => {
           },
         },
         (req, res) => {
-          // using StaticDecode to get the decoded types of the query parameters
           const validated = req.validated?.<Static<typeof apiQuerySchema>>();
           const search = validated?.query?.search; // string | undefined
           const year = validated?.query?.year; // number | undefined
@@ -122,19 +121,19 @@ describe('Routing with decode', () => {
 
     const response = await supertest(app)
       .get('/api/items')
-      .query({ search: 'Get It How You Live', year: 2025, includeArchived: true })
+      .query({ search: 'Get It How You Live', year: 2005, includeArchived: true })
       .set('Accept', 'application/json')
       .expect(200);
     // query parameters are always strings in the original request
     expect(response.body).to.have.property('original');
     expect(response.body.original).to.deep.equal({
       search: 'Get It How You Live',
-      year: '2025',
+      year: '2005',
       includeArchived: 'true',
     });
     // validated values should match the decoded query parameters
     expect(response.body).to.have.property('data');
-    expect(response.body.data).to.deep.equal({ search: 'Get It How You Live', year: 2025, includeArchived: true });
+    expect(response.body.data).to.deep.equal({ search: 'Get It How You Live', year: 2005, includeArchived: true });
   });
 
   /**
@@ -144,8 +143,28 @@ describe('Routing with decode', () => {
     const apiQuerySchema = Type.Object({
       search: Type.String(),
       year: Type.Optional(
-        Type.Codec(Type.Union([Type.Number(), Type.String()])) // allow number or string
-          .Decode((val) => (typeof val === 'string' && !isNaN(parseInt(val)) ? parseInt(val) : val))
+        Type.Codec(
+          Type.Union([
+            Type.Integer(),
+            Type.String({ pattern: '^-?\\d+$' }), // allow numeric strings as well
+          ])
+        )
+          .Decode((val) => {
+            const parsed = typeof val === 'string' ? Number(val) : val;
+            if (!Number.isSafeInteger(parsed)) {
+              // mimic TypeBox validation error structure
+              throw [
+                {
+                  keyword: 'type',
+                  schemaPath: '#/properties/query/properties/year',
+                  instancePath: '/query/year',
+                  params: { type: 'integer' },
+                  message: 'must be integer',
+                },
+              ];
+            }
+            return parsed; // Strictly typed and returned as `number`
+          })
           .Encode((val) => val)
       ),
       includeArchived: Type.Optional(
@@ -187,18 +206,18 @@ describe('Routing with decode', () => {
 
     const response = await supertest(app)
       .get('/api/items')
-      .query({ search: 'Get It How You Live', year: 2025, includeArchived: true })
+      .query({ search: 'Get It How You Live', year: 2005, includeArchived: true })
       .set('Accept', 'application/json')
       .expect(200);
     // query parameters are always strings in the original request
     expect(response.body).to.have.property('original');
     expect(response.body.original).to.deep.equal({
       search: 'Get It How You Live',
-      year: '2025',
+      year: '2005',
       includeArchived: 'true',
     });
     // validated values should match the decoded query parameters
     expect(response.body).to.have.property('data');
-    expect(response.body.data).to.deep.equal({ search: 'Get It How You Live', year: 2025, includeArchived: true });
+    expect(response.body.data).to.deep.equal({ search: 'Get It How You Live', year: 2005, includeArchived: true });
   });
 });

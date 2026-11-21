@@ -1,4 +1,4 @@
-import { validatorTypebox } from '../../lib/index.js';
+import { validatorTypebox } from '@novice1/validator-typebox';
 import routing from '@novice1/routing';
 import { expect } from 'chai';
 

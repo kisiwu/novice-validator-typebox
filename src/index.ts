@@ -231,6 +231,19 @@ export function validatorTypebox(
     if (!schema) {
       return next();
     }
+
+    const propagateError = (err: { errors: unknown[] }) => {
+      if (typeof req.meta.parameters?.onerror === 'function') {
+        return req.meta.parameters.onerror(err, req, res, next);
+      }
+      if (onerror) {
+        if (typeof onerror === 'function') {
+          return onerror(err, req, res, next);
+        }
+      }
+      return res.status(400).json(err);
+    };
+
     const values = buildValueToValidate(schema, req);
     const C = Compile(schema);
     let decodedValues = values;
@@ -247,22 +260,15 @@ export function validatorTypebox(
         // because 'query' is readonly since Express v5
         const { query: _, ...validatedProps } = decodedValues;
         Extend(req, validatedProps);
-      } catch (_err) {
-        //
+      } catch (e) {
+        const err: { errors: unknown[] } = { errors: Array.isArray(e) ? e : [e] };
+        return propagateError(err);
       }
     }
     const errors: TLocalizedValidationError[] = [...C.Errors(decodedValues)];
     if (errors.length) {
       const err: { errors: TLocalizedValidationError[] } = { errors };
-      if (typeof req.meta.parameters?.onerror === 'function') {
-        return req.meta.parameters.onerror(err, req, res, next);
-      }
-      if (onerror) {
-        if (typeof onerror === 'function') {
-          return onerror(err, req, res, next);
-        }
-      }
-      return res.status(400).json(err);
+      return propagateError(err);
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     req.validated = () => decodedValues as any;
