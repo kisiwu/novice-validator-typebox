@@ -19,7 +19,7 @@ declare global {
     interface MetaParameters {
       onerror?: routing.ErrorRequestHandler;
       validatorTypeboxOptions?: {
-        parse?: boolean;
+        decode?: boolean;
       };
     }
   }

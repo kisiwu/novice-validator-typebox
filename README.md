@@ -34,7 +34,7 @@ npm install @novice1/validator-typebox
 - 🎨 **Flexible error handling** with custom error handlers
 - 🔒 **TypeScript support** with type safety via `Static<typeof schema>`
 - ⚡ **Easy integration** with @novice1/routing
-- 🔄 **Optional parsing** to transform validated values according to schema types
+- 🔄 **Optional decoding** to transform validated values according to schema types
 - 📦 **Access validated data** via `req.validated()` function for type-safe retrieval of decoded values
 
 ## Quick Start
@@ -124,7 +124,7 @@ router.post(
 
 ### Accessing Validated Data
 
-Use `req.validated()` to access parsed values (especially useful for `query` which is readonly):
+Use `req.validated()` to access validated (*optionally decoded*) values (especially useful for `query` which is readonly):
 
 ```typescript
 const validated = req.validated?.<{ page?: number }>();
@@ -168,7 +168,7 @@ req.validated?.<Q, P, B, H, C, F>(): {
 }
 ```
 
-**Use case:** Access parsed `query` values (since `req.query` is readonly).
+**Use case:** Access decoded `query` values (since `req.query` is readonly).
 
 ## Examples
 

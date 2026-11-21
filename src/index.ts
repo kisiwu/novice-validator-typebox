@@ -235,9 +235,9 @@ export function validatorTypebox(
     const C = Compile(schema);
     let decodedValues = values;
     const decodeEnabled =
-      (typeof req.meta.parameters?.validatorTypeboxOptions === 'boolean' &&
-        req.meta.parameters?.validatorTypeboxOptions) ||
-      (typeof req.meta.parameters?.validatorTypeboxOptions === 'undefined' && options?.decode) ||
+      (typeof req.meta.parameters?.validatorTypeboxOptions?.decode === 'boolean' &&
+        req.meta.parameters?.validatorTypeboxOptions?.decode) ||
+      (typeof req.meta.parameters?.validatorTypeboxOptions?.decode === 'undefined' && options?.decode) ||
       false;
     if (decodeEnabled) {
       decodedValues.query = { ...decodedValues.query };

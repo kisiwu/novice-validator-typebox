@@ -4,7 +4,7 @@ export default defineConfig({
   enableLogs: true,
   exitOnFail: true,
   files: 'test/src',
-  ext: '.test.ts',
+  ext: 'decode.test.ts',
   options: {
     bail: false,
     fullTrace: true,

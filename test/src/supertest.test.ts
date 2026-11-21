@@ -9,7 +9,7 @@ const onerror: routing.ErrorRequestHandler<unknown, { error: unknown; isCustom: 
   res.status(400).json({ error: err, isCustom: true });
 };
 
-describe('Set validator', () => {
+describe('Routing with supertest', () => {
   let app: express.Express;
 
   beforeEach(() => {
@@ -137,7 +137,7 @@ describe('Set validator', () => {
     expect(response.body.errors).to.be.an('array').that.is.not.empty;
   });
 
-  it('should have validated() in the request object with parsed values', async () => {
+  it('should have validated() in the request object with decoded values', async () => {
     const BooleanString = Type.Codec(Type.Union([Type.Boolean(), Type.Literal('true'), Type.Literal('false')]))
       .Decode((val) => val === true || val === 'true')
       .Encode((val) => val);
@@ -185,12 +185,12 @@ describe('Set validator', () => {
     // query parameters are always strings in the original request
     expect(response.body).to.have.property('original');
     expect(response.body.original).to.deep.equal({ bool: 'true', number: '5' });
-    // validated values should match the parsed query parameters
+    // validated values should match the decoded query parameters
     expect(response.body).to.have.property('validated');
     expect(response.body.validated).to.deep.equal({ bool: true, number: 5 });
   });
 
-  it('should have validated() in the request object without parsing the values', async () => {
+  it('should have validated() in the request object without decoding the values', async () => {
     const BooleanString = Type.Codec(Type.Union([Type.Boolean(), Type.Literal('true'), Type.Literal('false')]))
       .Decode((val) => val === true || val === 'true')
       .Encode((val) => val);
@@ -238,7 +238,7 @@ describe('Set validator', () => {
     // query parameters are always strings in the original request
     expect(response.body).to.have.property('original');
     expect(response.body.original).to.deep.equal({ bool: 'false', number: '6' });
-    // validated values should match the parsed query parameters
+    // validated values should match the decoded query parameters
     expect(response.body).to.have.property('validated');
     expect(response.body.validated).to.deep.equal({ bool: 'false', number: '6' });
   });
