@@ -1,6 +1,7 @@
 import type routing from '@novice1/routing';
 
 declare global {
+  /*
   namespace Express {
     interface Request {
       validated?<Q = Record<string, unknown>, P = unknown, B = unknown, H = unknown, C = unknown, F = unknown>(): {
@@ -14,14 +15,17 @@ declare global {
       };
     }
   }
+  */
 
   namespace NoviceRouting {
+    /*
     interface MetaParameters {
       onerror?: routing.ErrorRequestHandler;
       validatorTypeboxOptions?: {
         decode?: boolean;
       };
     }
+    */
   }
 }
 
