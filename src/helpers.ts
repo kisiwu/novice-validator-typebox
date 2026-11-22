@@ -85,26 +85,12 @@ export type SchemaRouteTuple<
 ];
 
 export function route<
-  Path extends string,
-  S extends RouteSchema,
-  ResBody = any,
-  Locals extends Record<string, any> = Record<string, any>,
-  MetaResType = any,
->(
-  settings: SchemaMethodSettings<Path, S, ResBody, Locals, MetaResType>,
-  ...handlers: SchemaHandlersFor<Path, S, ResBody, Locals, MetaResType>
-): SchemaRouteTuple<Path, S, ResBody, Locals, MetaResType>;
-export function route<
   Path extends core.PathParams,
   S extends RouteSchema,
-  ResBody = any,
-  Locals extends Record<string, any> = Record<string, any>,
-  MetaResType = any,
+  ResBody,
+  Locals extends Record<string, any>,
+  MetaResType,
 >(
-  settings: SchemaMethodSettings<core.PathParams, S, ResBody, Locals, MetaResType>,
-  ...handlers: SchemaHandlersFor<core.PathParams, S, ResBody, Locals, MetaResType>
-): SchemaRouteTuple<Path, S, ResBody, Locals, MetaResType>;
-export function route<Path, S extends RouteSchema, ResBody, Locals extends Record<string, any>, MetaResType>(
   settings: SchemaMethodSettings<Path, S, ResBody, Locals, MetaResType>,
   ...handlers: SchemaHandlersFor<Path, S, ResBody, Locals, MetaResType>
 ): SchemaRouteTuple<Path, S, ResBody, Locals, MetaResType> {
@@ -121,6 +107,18 @@ export function route<Path, S extends RouteSchema, ResBody, Locals extends Recor
     },
     ...handlers,
   ] as const;
+}
+
+export function withSettings<Path extends core.PathParams, S extends RouteSchema>(
+  settings: SchemaMethodSettings<Path, S, any, Record<string, any>, any>
+) {
+  return {
+    route<ResBody = any, Locals extends Record<string, any> = Record<string, any>, MetaResType = any>(
+      ...handlers: SchemaHandlersFor<Path, S, ResBody, Locals, MetaResType>
+    ): SchemaRouteTuple<Path, S, ResBody, Locals, MetaResType> {
+      return route(settings, ...handlers);
+    },
+  };
 }
 
 /*

@@ -1,8 +1,10 @@
-import { type ValidatorTypeboxOptions, route, routeValidatorTypebox } from '../../src/index.js';
+import { type ValidatorTypeboxOptions, route, routeValidatorTypebox, withSettings } from '../../src/index.js';
 import routing from '@novice1/routing';
 import { expect } from 'chai';
 import express from 'express';
+import type { ParsedQs } from 'qs';
 import supertest from 'supertest';
+import type { Static } from 'typebox';
 import Type from 'typebox';
 
 // keep decode option to true
@@ -29,28 +31,28 @@ describe('Routing with decode', () => {
     const router = routing()
       .setValidators(routeValidatorTypebox())
       .get(
-        ...route(
-          {
-            path: '/api/items',
-            schema: { query: apiQuerySchema },
-            options: { decode: false },
-          },
-          (req, res) => {
-            const validated = req.validated?.();
-            const search = validated?.query?.search;
-            const year = validated?.query?.year;
-            const includeArchived = validated?.query?.includeArchived;
+        ...withSettings({
+          path: '/api/items',
+          schema: { query: apiQuerySchema },
+          options: { decode: false },
+        }).route<{ original: ParsedQs; data: Static<typeof apiQuerySchema> }>((req, res) => {
+          // we can force it with "!" to assert non-nullability
+          // if we are sure that the validator is being used correctly
+          // and don't want to write conditional checks for nullability (= being lazy)
+          const validated = req.validated!();
+          const search = validated.query.search;
+          const year = validated.query.year;
+          const includeArchived = validated.query.includeArchived;
 
-            res.json({
-              original: req.query,
-              data: {
-                search,
-                year,
-                includeArchived,
-              },
-            });
-          }
-        )
+          res.json({
+            original: req.query,
+            data: {
+              search,
+              year,
+              includeArchived,
+            },
+          });
+        })
       );
 
     app.use(router);
